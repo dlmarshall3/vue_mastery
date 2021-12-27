@@ -1,34 +1,73 @@
-var app = new Vue({
-    el: '#app',
-    data: {
-        brand: 'Vue Mastery',
-        product: 'Socks',
-        selectedVariant: 0,
-        link: 'http://www.vuemastery.com',
-        inStock: true,
-        inventory: 8,
-        details: ["80% cotton",'20% polyester','Gender-neutral'],
-        variants: [
-            {
-                variantId: 2234,
-                variantColor: 'Green',
-                variantImage: 'img/greensocks.jpeg'
-            },
-            {
-                variantId: 2235,
-                variantColor: "Blue",
-                variantImage: 'img/bluesocks.jpeg'
-            }
-        ],
-        cart: 0,
+Vue.component('product', {
+    props: {
+        premium: {
+            type: Boolean,
+            required: true
+        }
+    },
+    template: 
+    `<div class="product">
+
+        <div class="product-image">
+            <img :src="image">
+        </div>
+
+        <div class="product-info">
+            <h1>{{ title }}</h1>
+            <p v-if="inStock">In Stock</p>
+            <p v-else>Out of Stock</p>
+            <p>Shipping: {{ shipping }}</p>
+
+            <ul>
+                <li v-for="detail in details">{{ detail }}</li>
+            </ul>
+
+            <div v-for="(variant, index) in variants" 
+            :key="variant.variantId"
+            class="color-box"
+            :style="{ backgroundColor: variant.variantColor }"
+            @mouseover="updateProduct(index)">
+            </div>
+
+            <button v-on:click="addToCart" 
+                :disabled="!inStock"
+                :class="{ disabledButton: !inStock }">Add to Cart</button>
+
+            <!-- <button v-on:click="removeFromCart">Remove From Cart</button> -->
+
+
+        </div>
+       <product-review></product-review>
+    </div> `,
+    data() {
+        return {
+            brand: 'Vue Mastery',
+            cart: 0,
+            product: 'Socks',
+            selectedVariant: 0,
+            link: 'http://www.vuemastery.com',
+            details: ["80% cotton",'20% polyester','Gender-neutral'],
+            variants: [
+                {
+                    variantId: 2234,
+                    variantColor: 'Green',
+                    variantImage: 'img/greensocks.jpeg',
+                    variantQuantity: 10,
+                },
+                {
+                    variantId: 2235,
+                    variantColor: "Blue",
+                    variantImage: 'img/bluesocks.jpeg',
+                    variantQuantity: 0
+                }]
+        }
     },
     methods: {
-        addToCart: function(){
-            this.cart ++
+        addToCart(){
+            this.$emit('add-to-cart', this.variants[this.selectedVariant].variantId)
         },
         updateProduct: function(index){
             this.selectedVariant = index;
-            console.log(index)
         },
         removeFromCart: function(){
             this.cart --
@@ -40,6 +79,65 @@ var app = new Vue({
         },
         image() {
             return this.variants[this.selectedVariant].variantImage
+        },
+        inStock() {
+            return this.variants[this.selectedVariant].variantQuantity
+        },
+        shipping() {
+            if (this.premium){
+                return "Free"
+            }
+            return "$2.99"
+        }
+    }
+})
+
+Vue.component('product-review', {
+    template:
+    `
+    <form class="review-form" @submit.prevent="onSubmit">
+        <p>
+            <label for="name">Name:</label>
+            <input id="name" v-model="name" placeholder="Name">
+        </p>
+
+        <p>
+            <label for="review">Review:</label>
+            <textarea id="review" v-model="review"></textarea>
+        </p>
+
+        <p>
+            <label for="rating">Rating:</label>
+            <select id="rating" v-model.number="rating">
+                <option>5</option>
+                <option>4</option>
+                <option>3</option>
+                <option>2</option>
+                <option>1</option>
+            </select>
+        </p>
+
+        <p>
+            <input type="submit" value="Submit">
+        </p>
+    </form>   
+    `,
+    data(){
+        return {
+            name: null
+        }
+    }
+})
+
+var app = new Vue({
+    el: '#app',
+    data: {
+        premium: false,
+        cart: []
+    },
+    methods: {
+        updateCart(id){
+            this.cart.push(id)
         }
     }
 })
